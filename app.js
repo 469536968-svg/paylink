@@ -255,6 +255,29 @@
     });
     $("copy").addEventListener("click", copy);
     $("dl").addEventListener("click", download);
+    // Prefill from ?to=&token=&chain=&amount= so a link can carry the whole request.
+    try {
+      var qs = new URLSearchParams(location.search);
+      if (qs.get("to")) $("to").value = qs.get("to");
+      if (qs.get("chain")) {
+        var c = qs.get("chain");
+        var opts = $("chain").options, found = false;
+        for (var i = 0; i < opts.length; i++) if (opts[i].value === c) { found = true; break; }
+        if (!found && /^[0-9]+$/.test(c)) {
+          var o = document.createElement("option");
+          o.value = c; o.textContent = "Chain " + c; $("chain").appendChild(o);
+        }
+        $("chain").value = c;
+        populateTokens();
+        if (qs.get("token")) {
+          var t = qs.get("token"), topts = $("token").options, tfound = false;
+          for (var k = 0; k < topts.length; k++) if (topts[k].value === t) { tfound = true; break; }
+          if (!tfound) { var to = document.createElement("option"); to.value = t; to.textContent = t; $("token").appendChild(to); }
+          $("token").value = t;
+        } else populateTokens();
+      }
+      if (qs.get("amount")) $("amount").value = qs.get("amount");
+    } catch (e) { /* bad query params must never break the tool */ }
     render();
   }
 
