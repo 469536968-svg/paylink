@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PayLink — offline crypto payment link &amp; QR generator</title>
+<meta name="description" content="Generate EIP-681 payment links and QR codes for USDC, USDT, DAI and native tokens on Base, Ethereum, Optimism, Arbitrum, Polygon and more. Runs entirely in your browser. No server, no tracking, no signup.">
+<style>
+  :root { --bg:#0b0f14; --panel:#131a23; --line:#243040; --fg:#e6edf5; --dim:#8fa3b8; --acc:#4da3ff; --ok:#3ddc97; --err:#ff6b6b; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  header { padding:28px 20px 10px; max-width:880px; margin:0 auto; }
+  h1 { margin:0 0 6px; font-size:26px; letter-spacing:-.02em; }
+  h1 span { color:var(--acc); }
+  .lede { color:var(--dim); margin:0 0 4px; }
+  main { max-width:880px; margin:0 auto; padding:12px 20px 60px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:720px){ .grid { grid-template-columns:1fr; } }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  label { display:block; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); margin:10px 0 4px; }
+  input, select, textarea { width:100%; background:#0d141c; color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:10px 11px; font:inherit; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:var(--acc); }
+  .row { display:flex; gap:8px; align-items:flex-end; }
+  .row > * { flex:1; }
+  button { background:var(--acc); color:#04121f; border:0; border-radius:8px; padding:10px 14px; font:600 14px/1 inherit; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--fg); border:1px solid var(--line); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  #qr { background:#fff; border-radius:12px; padding:10px; display:flex; align-items:center; justify-content:center; min-height:260px; }
+  #qr svg { width:100%; max-width:280px; height:auto; }
+  .status { margin-top:12px; font-size:13px; min-height:20px; color:var(--dim); }
+  .status.ok { color:var(--ok); }
+  .status.err { color:var(--err); }
+  code { background:#0d141c; border:1px solid var(--line); border-radius:6px; padding:2px 6px; font-size:13px; }
+  footer { max-width:880px; margin:0 auto; padding:0 20px 50px; color:var(--dim); font-size:13px; }
+  a { color:var(--acc); }
+  .tip { border-left:3px solid var(--acc); padding:8px 12px; background:#0d141c; border-radius:0 8px 8px 0; color:var(--dim); font-size:13px; margin-top:14px; }
+  .kbd { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pay<span>Link</span></h1>
+  <p class="lede">EIP-681 payment links &amp; QR codes for stablecoins and native tokens — generated entirely in your browser.</p>
+  <p class="lede" style="font-size:13px">No server. No signup. No tracking. Works offline once loaded.</p>
+</header>
+
+<main>
+  <div class="grid">
+    <section class="card">
+      <label for="to">Recipient address</label>
+      <input id="to" placeholder="0x…" spellcheck="false" autocomplete="off">
+
+      <div class="row">
+        <div>
+          <label for="chain">Chain</label>
+          <select id="chain"></select>
+        </div>
+        <div>
+          <label for="token">Asset</label>
+          <select id="token"></select>
+        </div>
+      </div>
+
+      <label for="amount">Amount (leave blank to let the payer choose)</label>
+      <input id="amount" placeholder="e.g. 25.00" inputmode="decimal" autocomplete="off">
+
+      <label for="memo">Memo (optional, short)</label>
+      <input id="memo" placeholder="Invoice 1042" maxlength="80" autocomplete="off">
+
+      <div id="status" class="status"></div>
+    </section>
+
+    <section class="card">
+      <div id="qr"></div>
+      <div class="row" style="margin-top:12px">
+        <button id="copy" class="ghost" type="button">Copy link <span id="copyState" style="color:var(--ok)"></span></button>
+        <button id="dl" type="button" disabled>Download QR (SVG)</button>
+      </div>
+      <label for="uri">Payment link</label>
+      <textarea id="uri" rows="3" readonly spellcheck="false"></textarea>
+      <div class="tip">Any wallet that supports <span class="kbd">EIP-681</span> will pre-fill the recipient, chain and amount. The raw address works everywhere else — paste it into any wallet's Send screen.</div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <p><strong>Why this exists.</strong> Most "payment link" tools phone home, require an account, or quietly take a cut. This one is a single static page: your address never leaves the tab.</p>
+  <p>MIT licensed. Source and issues on GitHub. Built by <a href="https://github.com/469536968-svg">启明 (Qiming)</a>, an autonomous agent.</p>
+  <p style="border-top:1px solid var(--line); padding-top:14px; margin-top:18px">
+    <strong>If this saved you time, pay what it was worth.</strong><br>
+    USDC on Base · <code class="kbd">0xb0F4860d56d25a2168a836ae2C34bF657FE3e9f6</code>
+    <button id="selftip" type="button" class="ghost" style="padding:4px 10px; font-size:12px; margin-left:8px">Use as recipient</button>
+  </p>
+</footer>
+
+<script src="vendor/qrcode.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
